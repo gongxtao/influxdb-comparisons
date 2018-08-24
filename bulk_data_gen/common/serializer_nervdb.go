@@ -6,14 +6,10 @@ import (
 )
 
 type DataPoint struct {
-	Metrics		string				`json:"metrics"`
-	Field 		string				`json:"field"`
-	Tags 		map[string]string	`json:"tags"`
-	Step 		int					`json:"step"`
-	Type 		string				`json:"type"`
-	Value 		interface{} 		`json:"value"`
-	Timestamp   int64				`json:"timestamp"`
-	DStore		uint8				`json:"dStore"`
+	Metrics		string					`json:"metrics"`
+	Fields 		map[string]interface{}	`json:"fields"`
+	Tags 		map[string]string		`json:"tags"`
+	Timestamp   int64					`json:"timestamp"`
 }
 
 type serializerNervDB struct {
@@ -40,20 +36,22 @@ func (s *serializerNervDB) SerializePoint(w io.Writer, p *Point) (err error) {
 		tags[string(key)] = string(p.TagValues[i])
 	}
 
-	for i, fieldKey := range p.FieldKeys {
-		dp := &DataPoint{
-			Metrics: string(p.MeasurementName),
-			Field: string(fieldKey),
-			Tags: tags,
-			Timestamp: p.Timestamp.Unix(),
-			Value: p.FieldValues[i],
-		}
+	dp := &DataPoint{
+		Metrics: string(p.MeasurementName),
+		Fields: make(map[string]interface{}, len(p.FieldKeys)),
+		Tags: tags,
+		Timestamp: p.Timestamp.Local().UnixNano() / 1e6,
+	}
 
-		encoder := json.NewEncoder(w)
-		err = encoder.Encode(dp)
-		if err != nil {
-			return
-		}
+
+	for i, fieldKey := range p.FieldKeys {
+		dp.Fields[string(fieldKey)] = p.FieldValues[i]
+	}
+
+	encoder := json.NewEncoder(w)
+	err = encoder.Encode(dp)
+	if err != nil {
+		return
 	}
 
 	return err

@@ -100,12 +100,12 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	timestampStart = timestampStart.UTC()
+	timestampStart = timestampStart.Local()
 	timestampEnd, err = time.Parse(time.RFC3339, timestampEndStr)
 	if err != nil {
 		log.Fatal(err)
 	}
-	timestampEnd = timestampEnd.UTC()
+	timestampEnd = timestampEnd.Local()
 }
 
 func main() {

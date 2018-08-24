@@ -1,0 +1,164 @@
+{
+	"ImportPath": "github.com/influxdata/influxdb-comparisons",
+	"GoVersion": "go1.9",
+	"GodepVersion": "v79",
+	"Packages": [
+		"./..."
+	],
+	"Deps": [
+		{
+			"ImportPath": "github.com/gocql/gocql",
+			"Comment": "pre-node-events-640-ge48272f",
+			"Rev": "e48272ffe6343736ca6acace2c51a312c7a58baf"
+		},
+		{
+			"ImportPath": "github.com/gocql/gocql/internal/lru",
+			"Comment": "pre-node-events-640-ge48272f",
+			"Rev": "e48272ffe6343736ca6acace2c51a312c7a58baf"
+		},
+		{
+			"ImportPath": "github.com/gocql/gocql/internal/murmur",
+			"Comment": "pre-node-events-640-ge48272f",
+			"Rev": "e48272ffe6343736ca6acace2c51a312c7a58baf"
+		},
+		{
+			"ImportPath": "github.com/gocql/gocql/internal/streams",
+			"Comment": "pre-node-events-640-ge48272f",
+			"Rev": "e48272ffe6343736ca6acace2c51a312c7a58baf"
+		},
+		{
+			"ImportPath": "github.com/golang/protobuf/proto",
+			"Rev": "1e59b77b52bf8e4b449a57e6f79f21226d571845"
+		},
+		{
+			"ImportPath": "github.com/golang/snappy",
+			"Rev": "553a641470496b2327abcac10b36396bd98e45c9"
+		},
+		{
+			"ImportPath": "github.com/google/flatbuffers/go",
+			"Rev": "c721009491dc8275052cf33f7334e015ed737927"
+		},
+		{
+			"ImportPath": "github.com/hailocab/go-hostpool",
+			"Rev": "e80d13ce29ede4452c43dea11e79b9bc8a15b478"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/go-msgpack/codec",
+			"Rev": "fa3f63826f7c23912c15263591e65d54d080b458"
+		},
+		{
+			"ImportPath": "github.com/jackc/pgx",
+			"Comment": "v3.2.0-3-gaa561b8",
+			"Rev": "aa561b8f3c545aad9e0b5fb1514e440d330dd016"
+		},
+		{
+			"ImportPath": "github.com/jackc/pgx/chunkreader",
+			"Comment": "v3.2.0-3-gaa561b8",
+			"Rev": "aa561b8f3c545aad9e0b5fb1514e440d330dd016"
+		},
+		{
+			"ImportPath": "github.com/jackc/pgx/internal/sanitize",
+			"Comment": "v3.2.0-3-gaa561b8",
+			"Rev": "aa561b8f3c545aad9e0b5fb1514e440d330dd016"
+		},
+		{
+			"ImportPath": "github.com/jackc/pgx/pgio",
+			"Comment": "v3.2.0-3-gaa561b8",
+			"Rev": "aa561b8f3c545aad9e0b5fb1514e440d330dd016"
+		},
+		{
+			"ImportPath": "github.com/jackc/pgx/pgproto3",
+			"Comment": "v3.2.0-3-gaa561b8",
+			"Rev": "aa561b8f3c545aad9e0b5fb1514e440d330dd016"
+		},
+		{
+			"ImportPath": "github.com/jackc/pgx/pgtype",
+			"Comment": "v3.2.0-3-gaa561b8",
+			"Rev": "aa561b8f3c545aad9e0b5fb1514e440d330dd016"
+		},
+		{
+			"ImportPath": "github.com/klauspost/compress/flate",
+			"Comment": "v1.4.0-2-gb500177",
+			"Rev": "b50017755d442260d792c34c7c43216d9ba7ffc7"
+		},
+		{
+			"ImportPath": "github.com/klauspost/compress/gzip",
+			"Comment": "v1.4.0-2-gb500177",
+			"Rev": "b50017755d442260d792c34c7c43216d9ba7ffc7"
+		},
+		{
+			"ImportPath": "github.com/klauspost/compress/zlib",
+			"Comment": "v1.4.0-2-gb500177",
+			"Rev": "b50017755d442260d792c34c7c43216d9ba7ffc7"
+		},
+		{
+			"ImportPath": "github.com/klauspost/cpuid",
+			"Comment": "v1.1-4-ge7e905e",
+			"Rev": "e7e905edc00ea8827e58662220139109efea09db"
+		},
+		{
+			"ImportPath": "github.com/pkg/errors",
+			"Comment": "v0.8.0-12-g816c908",
+			"Rev": "816c9085562cd7ee03e7f8188a1cfd942858cded"
+		},
+		{
+			"ImportPath": "github.com/pkg/profile",
+			"Comment": "v1.2.1-2-g057bc52",
+			"Rev": "057bc52a47ec3c79498dda63f4a6f8298725e976"
+		},
+		{
+			"ImportPath": "github.com/valyala/bytebufferpool",
+			"Rev": "e746df99fe4a3986f4d4f79e13c1e0117ce9c2f7"
+		},
+		{
+			"ImportPath": "github.com/valyala/fasthttp",
+			"Rev": "67064edf274428447a1f27eb3d969b403e464051"
+		},
+		{
+			"ImportPath": "github.com/valyala/fasthttp/fasthttputil",
+			"Rev": "67064edf274428447a1f27eb3d969b403e464051"
+		},
+		{
+			"ImportPath": "github.com/valyala/fasthttp/reuseport",
+			"Rev": "67064edf274428447a1f27eb3d969b403e464051"
+		},
+		{
+			"ImportPath": "github.com/valyala/fasthttp/stackless",
+			"Rev": "67064edf274428447a1f27eb3d969b403e464051"
+		},
+		{
+			"ImportPath": "github.com/valyala/tcplisten",
+			"Rev": "ceec8f93295a060cdb565ec25e4ccf17941dbd55"
+		},
+		{
+			"ImportPath": "gopkg.in/inf.v0",
+			"Comment": "v0.9.1",
+			"Rev": "d2d2541c53f18d2a059457998ce2876cc8e67cbf"
+		},
+		{
+			"ImportPath": "gopkg.in/mgo.v2",
+			"Comment": "r2016.08.01-7-g9856a29",
+			"Rev": "9856a29383ce1c59f308dd1cf0363a79b5bef6b5"
+		},
+		{
+			"ImportPath": "gopkg.in/mgo.v2/bson",
+			"Comment": "r2016.08.01-7-g9856a29",
+			"Rev": "9856a29383ce1c59f308dd1cf0363a79b5bef6b5"
+		},
+		{
+			"ImportPath": "gopkg.in/mgo.v2/internal/json",
+			"Comment": "r2016.08.01-7-g9856a29",
+			"Rev": "9856a29383ce1c59f308dd1cf0363a79b5bef6b5"
+		},
+		{
+			"ImportPath": "gopkg.in/mgo.v2/internal/sasl",
+			"Comment": "r2016.08.01-7-g9856a29",
+			"Rev": "9856a29383ce1c59f308dd1cf0363a79b5bef6b5"
+		},
+		{
+			"ImportPath": "gopkg.in/mgo.v2/internal/scram",
+			"Comment": "r2016.08.01-7-g9856a29",
+			"Rev": "9856a29383ce1c59f308dd1cf0363a79b5bef6b5"
+		}
+	]
+}

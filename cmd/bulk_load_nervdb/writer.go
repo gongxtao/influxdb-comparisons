@@ -63,7 +63,7 @@ var (
 // WriteLineProtocol writes the given byte slice to the HTTP server described in the Writer's HTTPWriterConfig.
 // It returns the latency in nanoseconds and any error received while sending the data over HTTP,
 // or it returns a new error if the HTTP response isn't as expected.
-func (w *HTTPWriter) WriteLineProtocol(body []byte, isGzip bool) (int64, error) {
+func (w *HTTPWriter) WriteLineProtocol(body []byte, isGzip bool) ([]byte, int64, error) {
 	req := fasthttp.AcquireRequest()
 	req.Header.SetContentTypeBytes(textPlain)
 	req.Header.SetMethodBytes(post)
@@ -77,19 +77,21 @@ func (w *HTTPWriter) WriteLineProtocol(body []byte, isGzip bool) (int64, error) 
 	start := time.Now()
 	err := w.client.Do(req, resp)
 	lat := time.Since(start).Nanoseconds()
+	var respBody []byte
 	if err == nil {
 		sc := resp.StatusCode()
-		if sc == 500 && backpressurePred(resp.Body()) {
+		respBody = resp.Body()
+		if sc == fasthttp.StatusInternalServerError && backpressurePred(respBody) {
 			err = BackoffError
-		} else if sc != fasthttp.StatusNoContent {
-			err = fmt.Errorf("[DebugInfo: %s] Invalid write response (status %d): %s", w.c.DebugInfo, sc, resp.Body())
+		} else if sc != fasthttp.StatusOK {
+			err = fmt.Errorf("[DebugInfo: %s] Invalid write response (status %d): %s", w.c.DebugInfo, sc, respBody)
 		}
 	}
 
 	fasthttp.ReleaseResponse(resp)
 	fasthttp.ReleaseRequest(req)
 
-	return lat, err
+	return respBody, lat, err
 }
 
 func backpressurePred(body []byte) bool {

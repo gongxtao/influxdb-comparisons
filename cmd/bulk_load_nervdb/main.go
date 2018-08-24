@@ -12,7 +12,6 @@ import (
 	"github.com/influxdata/influxdb-comparisons/bulk_data_gen/common"
 	"strconv"
 	"sync/atomic"
-	"github.com/ChaosXu/nerv-monitor/common/model"
 	"github.com/hashicorp/go-msgpack/codec"
 	"fmt"
 	"log"
@@ -27,6 +26,8 @@ var (
 	memprofile	bool
 	timeLimit 	time.Duration
 	itemLimit	int64
+	doLoad 		bool
+	debug 		bool
 )
 
 // global vars
@@ -51,12 +52,14 @@ var (
 )
 
 func init() {
-	flag.StringVar(&urls, "urls", "http://leader:3362", "nervdb urls, comma-separated, Will be used in a round-robin fashion.")
+	flag.StringVar(&urls, "urls", "http://localhost:3362", "nervdb urls, comma-separated, Will be used in a round-robin fashion.")
 	flag.IntVar(&workers, "workers", 1, "Number of parallel requests to make.")
-	flag.IntVar(&batchSize, "batch-size", 2, "Batch size (1 line of input = 1 item).")
+	flag.IntVar(&batchSize, "batch-size", 1024, "Batch size (1 line of input = 1 item).")
 	flag.BoolVar(&memprofile, "memprofile", false, "Whether to write a memprofile (file automatically determined).")
 	flag.DurationVar(&timeLimit, "time-limit", -1, "Maximum duration to run (-1 is the default: no limit).")
 	flag.Int64Var(&itemLimit, "item-limit", -1, "Number of items to read from stdin before quitting. (1 item per 1 line of input.)")
+	flag.BoolVar(&doLoad, "do-load", true, "Whether to write data. Set this flag to false to check input read speed.")
+	flag.BoolVar(&debug, "debug", false, "Whether to print debug log.")
 
 	flag.Parse()
 
@@ -74,7 +77,7 @@ func main() {
 	}
 
 	batchChan = make(chan *bytes.Buffer, workers)
-	inputDone = make(chan struct{})
+	inputDone = make(chan struct{}, 1)
 
 	backOffChans = make([]chan bool, workers)
 	backOffDoneChans = make([]chan struct{}, workers)
@@ -93,12 +96,11 @@ func main() {
 		go processBatchSend(i, hw, batchChan, backOffChans[i])
 		go processBackoffMessages(i, backOffChans[i], backOffDoneChans[i])
 
-		waitGroup.Add(2)
+		waitGroup.Add(1)
 	}
 
 	start := time.Now()
 	itemsRead, bytesRead, valuesRead := scan(batchSize)
-
 	<- inputDone
 	close(batchChan)
 
@@ -128,22 +130,26 @@ func processBatchSend(worker int, httpWriter *HTTPWriter, batchChan <-chan *byte
 		bodySize := buf.Len()
 		start := time.Now()
 
-		var err error
+		var body []byte
 
-		for {
-			_, err = httpWriter.WriteLineProtocol(buf.Bytes(), false)
-			if err == BackoffError {
-				backOffChan <- true
-				time.Sleep(time.Second)
-				continue
+		if doLoad {
+			var err error
+
+			for {
+				body, _, err = httpWriter.WriteLineProtocol(buf.Bytes(), false)
+				if err == BackoffError {
+					backOffChan <- true
+					time.Sleep(time.Second)
+					continue
+				}
+
+				backOffChan <- false
+				break
 			}
 
-			backOffChan <- false
-			break
-		}
-
-		if err != nil {
-			log.Fatalf("failed to write: %v", err)
+			if err != nil {
+				log.Fatalf("failed to write: %v", err)
+			}
 		}
 
 		cost := float64(time.Now().Sub(start))/1e6
@@ -152,7 +158,9 @@ func processBatchSend(worker int, httpWriter *HTTPWriter, batchChan <-chan *byte
 		bufPool.Put(buf)
 
 
-		log.Printf("work:%d, seq num:%d, body size:%d, cost:%f ms", worker, seqNum, bodySize, cost)
+		if debug {
+			log.Printf("work:%d, seq num:%d, body size:%d, cost:%f ms, res body: %s", worker, seqNum, bodySize, cost, body)
+		}
 	}
 
 	waitGroup.Done()
@@ -164,12 +172,12 @@ func processBackoffMessages(workerId int, src chan bool, dst chan struct{}) {
 	last := false
 
 	for this := range src {
-		if this && !last {
+		if ! this && !last {
 			start = time.Now()
 			last = true
 		} else if !this && last {
 			took := time.Now().Sub(start)
-			fmt.Printf("[worker %d] backoff took %.02fsec\n", workerId, took.Seconds())
+			//log.Printf("[worker %d] backoff took %.02fsec\n", workerId, took.Seconds())
 			totalBackoffSecs += took.Seconds()
 			last = false
 			start = time.Now()
@@ -195,7 +203,7 @@ func scan(itemsPerBatch int) (int64, int64, int64) {
 
 	var batchItemCount uint64
 
-	metricses := make([]*model.MetaData, 0, itemsPerBatch)
+	points := make([]*common.DataPoint, 0, itemsPerBatch)
 
 	buf.Write([]byte{'['})
 
@@ -237,17 +245,19 @@ outer:
 			buf.Write([]byte{']'})
 			bytesRead += int64(buf.Len())
 
-			if err := json.Unmarshal(buf.Bytes(), &metricses); err != nil {
-				log.Fatalf("failed to unmarshal: %v", err)
+			if err := json.Unmarshal(buf.Bytes(), &points); err != nil {
+				log.Fatalf("failed to unmarshal: %v\ncontent:%s", err, buf.String())
 			}
 			buf.Reset()
+
 			bufPool.Put(buf)
 
 			send := bufPool.Get().(*bytes.Buffer)
 			encode := codec.NewEncoder(send, &codec.MsgpackHandle{})
-			if err := encode.Encode(metricses); err != nil {
+			if err := encode.Encode(points); err != nil {
 				log.Fatalf("failed to encode: %v", err)
 			}
+			points = make([]*common.DataPoint, 0, itemsPerBatch)
 
 			batchChan <- send
 			buf = bufPool.Get().(*bytes.Buffer)
@@ -270,12 +280,25 @@ outer:
 
 	// Finished reading input, make sure last batch goes out.
 	if n > 0 {
-		batchChan <- buf
+		if err := json.Unmarshal(append(buf.Bytes()[:buf.Len()-1], ']'), &points); err != nil {
+			log.Fatalf("failed to unmarshal: %v,\ncontent: %s", err, buf.String())
+		}
+		buf.Reset()
+		bufPool.Put(buf)
+
+		send := bufPool.Get().(*bytes.Buffer)
+		encode := codec.NewEncoder(send, &codec.MsgpackHandle{})
+		if err := encode.Encode(points); err != nil {
+			log.Fatalf("failed to encode: %v", err)
+		}
+		points = make([]*common.DataPoint, 0, itemsPerBatch)
+
+		batchChan <- send
 	}
 
 	inputDone <- struct{}{}
 	if itemsRead != totalPoints {
-		log.Fatalf("Incorrent number of read points: %d, expected: %d:", itemsRead, totalPoints)
+		log.Fatalf("Incorrent number of read point values: %d, expected: %d", itemsRead, totalPoints)
 	}
 
 	return itemsRead, bytesRead, totalValues
